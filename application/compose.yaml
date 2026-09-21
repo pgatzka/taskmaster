@@ -1,0 +1,11 @@
+name: taskmaster
+
+services:
+  postgres:
+    image: 'postgres:18-alpine'
+    environment:
+      POSTGRES_DB: taskmaster
+      POSTGRES_PASSWORD: taskmaster
+      POSTGRES_USER: taskmaster
+    ports:
+      - '5432:5432'
