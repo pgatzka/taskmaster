@@ -1,0 +1,10 @@
+spring:
+  docker:
+    compose:
+      enabled: true
+      file:
+        - application/compose.yaml
+logging:
+  level:
+    root: info
+    io.github.pgatzka.taskmaster: debug

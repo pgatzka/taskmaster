@@ -1,5 +1,50 @@
 [versions]
+mapstruct = "1.6.3"
 
 [plugins]
+io-freefair-lombok = { id = "io.freefair.lombok", version = "9.5.0" }
+org-springframework-boot = { id = "org.springframework.boot", version = "4.1.1" }
+io-spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.7" }
 
 [libraries]
+org-junit-platform-junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+org-mapstruct-mapstruct = { group = "org.mapstruct", name = "mapstruct", version.ref = "mapstruct" }
+org-mapstruct-mapstruct-processor = { group = "org.mapstruct", name = "mapstruct-processor", version.ref = "mapstruct" }
+org-postgresql-postgresql = { group = "org.postgresql", name = "postgresql" }
+org-springframework-boot-spring-boot-docker-compose = { group = "org.springframework.boot", name = "spring-boot-docker-compose" }
+org-springframework-boot-spring-boot-starter-data-jpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa" }
+org-springframework-boot-spring-boot-starter-flyway = { group = "org.springframework.boot", name = "spring-boot-starter-flyway" }
+org-springframework-boot-spring-boot-starter-data-jpa-test = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa-test" }
+org-springframework-boot-spring-boot-starter-flyway-test = { group = "org.springframework.boot", name = "spring-boot-starter-flyway-test" }
+org-springframework-boot-spring-boot-testcontainers = { group = "org.springframework.boot", name = "spring-boot-testcontainers" }
+org-testcontainers-testcontainers-junit-jupiter = { group = "org.testcontainers", name = "testcontainers-junit-jupiter" }
+org-testcontainers-testcontainers-postgresql = { group = "org.testcontainers", name = "testcontainers-postgresql" }
+org-flywaydb-flyway-database-postgresql = { group = "org.flywaydb", name = "flyway-database-postgresql" }
+
+[bundles]
+implementation = [
+    "org-springframework-boot-spring-boot-starter-data-jpa",
+    "org-mapstruct-mapstruct",
+    "org-springframework-boot-spring-boot-starter-flyway",
+    "org-flywaydb-flyway-database-postgresql"
+]
+test-implementation = [
+    "org-springframework-boot-spring-boot-starter-data-jpa-test",
+    "org-springframework-boot-spring-boot-testcontainers",
+    "org-testcontainers-testcontainers-junit-jupiter",
+    "org-testcontainers-testcontainers-postgresql",
+    "org-springframework-boot-spring-boot-starter-flyway-test"
+]
+development-only = [
+    "org-springframework-boot-spring-boot-docker-compose"
+]
+runtime-only = [
+    "org-postgresql-postgresql"
+]
+test-runtime-only = [
+    "org-junit-platform-junit-platform-launcher"
+]
+annotation-processor = [
+    "org-mapstruct-mapstruct-processor"
+]
+
