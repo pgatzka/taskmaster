@@ -1,24 +1,21 @@
 package io.github.pgatzka.taskmaster.domain.service;
 
+import io.github.pgatzka.taskmaster.domain.probe.TaskProbe;
 import io.github.pgatzka.taskmaster.domain.dto.TaskDTO;
 import io.github.pgatzka.taskmaster.domain.entity.TaskEntity;
-import io.github.pgatzka.taskmaster.domain.exception.TaskNotFoundException;
-import io.github.pgatzka.taskmaster.domain.exception.TaskTitleAlreadyExistsException;
 import io.github.pgatzka.taskmaster.domain.mapper.TaskMapper;
 import io.github.pgatzka.taskmaster.domain.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TaskDomainService {
@@ -27,60 +24,42 @@ public class TaskDomainService {
 
     private final TaskMapper taskMapper;
 
-    @Transactional
     public @NonNull TaskDTO create(@NonNull TaskDTO taskDTO) {
-        if (taskRepository.existsByTitleIgnoreCase(taskDTO.title())) {
-            throw new TaskTitleAlreadyExistsException(taskDTO.title());
+        if (taskRepository.existsByTitle(taskDTO.title())) {
+            throw new RuntimeException("Task with title '%s' already exists".formatted(taskDTO.title()));
         }
-        TaskEntity entity = taskRepository.save(taskMapper.toEntity(taskDTO));
-        log.info("created task: {}", entity.getId());
-        return taskMapper.toDTO(entity);
+        return taskMapper.toDTO(taskRepository.save(taskMapper.toEntity(taskDTO)));
     }
 
-    @Transactional(readOnly = true)
-    public @NonNull TaskDTO findById(@NonNull UUID id) {
-        log.debug("loading task: {}", id);
-        return taskMapper.toDTO(findEntityById(id));
+    public @NonNull TaskDTO findByKey(@NonNull UUID key) {
+        return taskMapper.toDTO(getByKey(key));
     }
 
-    @Transactional(readOnly = true)
-    public @NonNull List<TaskDTO> findAll() {
-        List<TaskDTO> tasks = taskRepository.findAll().stream().map(taskMapper::toDTO).toList();
-        log.debug("Found {} tasks", tasks.size());
-        return tasks;
+    public @NonNull Page<TaskDTO> findAll(@NonNull TaskProbe probe, @NonNull Pageable pageable) {
+        return taskRepository.findAll(probe.toSpecification(), pageable).map(taskMapper::toDTO);
     }
 
-    @Transactional
-    public @NonNull TaskDTO update(@NonNull TaskDTO taskDTO) {
-        Objects.requireNonNull(taskDTO.id());
-        TaskEntity entity = findEntityById(taskDTO.id());
-        checkVersion(entity, taskDTO.version());
-        taskMapper.update(taskDTO, entity);
-        TaskEntity updatedEntity = taskRepository.saveAndFlush(entity);
-        log.info("updated task {} to version {}", updatedEntity.getId(), updatedEntity.getVersion());
-        return taskMapper.toDTO(updatedEntity);
+    public @NonNull TaskDTO update(@NonNull UUID key, @NonNull TaskDTO dto) {
+        TaskEntity taskEntity = getByKey(key);
+        checkVersion(key, taskEntity.getVersion(), dto.version());
+        taskMapper.update(dto, taskEntity);
+        return taskMapper.toDTO(taskRepository.saveAndFlush(taskEntity));
     }
 
-    @Transactional
-    public void delete(@NonNull TaskDTO taskDTO) {
-        Objects.requireNonNull(taskDTO.id());
-        TaskEntity taskEntity = findEntityById(taskDTO.id());
-        checkVersion(taskEntity, taskDTO.version());
+    public void delete(@NonNull UUID key, @NonNull Long version) {
+        TaskEntity taskEntity = getByKey(key);
+        checkVersion(key, taskEntity.getVersion(), version);
         taskRepository.delete(taskEntity);
-        log.info("deleted task: {}", taskEntity.getId());
     }
 
-    private void checkVersion(@NonNull TaskEntity entity, @Nullable Integer version) {
-        if (!Objects.equals(entity.getVersion(), version)) {
-            Objects.requireNonNull(entity.getId());
-            log.debug("Version conflict on task {}: expected {}, got {}", entity.getId(), entity.getVersion(), version);
-            throw new ObjectOptimisticLockingFailureException(TaskEntity.class, entity.getId());
+    private void checkVersion(@NonNull UUID key, @Nullable Long actualVersion, @Nullable Long expectedVersion) {
+        if (!Objects.equals(actualVersion, expectedVersion)) {
+            throw new ObjectOptimisticLockingFailureException(TaskEntity.class, key);
         }
     }
 
-    private @NonNull TaskEntity findEntityById(@NonNull UUID id) {
-        return taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
+    private TaskEntity getByKey(UUID key) {
+        return taskRepository.findByKey(key).orElseThrow(() -> new RuntimeException("Task with key '%s' not found".formatted(key)));
     }
-
 
 }

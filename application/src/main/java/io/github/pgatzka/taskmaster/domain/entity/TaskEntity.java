@@ -1,6 +1,6 @@
 package io.github.pgatzka.taskmaster.domain.entity;
 
-import io.github.pgatzka.taskmaster.domain.AbstractEntity;
+import io.github.pgatzka.taskmaster.domain.base.AbstractEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

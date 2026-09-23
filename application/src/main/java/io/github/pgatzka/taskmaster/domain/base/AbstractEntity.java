@@ -1,9 +1,9 @@
-package io.github.pgatzka.taskmaster.domain;
+package io.github.pgatzka.taskmaster.domain.base;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.ToString;
-import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -19,31 +19,23 @@ import java.util.UUID;
 public abstract class AbstractEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
-    private @Nullable UUID id;
+    private @Nullable Long id;
+
+    @Column(name = "key", nullable = false, updatable = false)
+    private @NonNull UUID key = UUID.randomUUID();
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private @Nullable Instant createdAt;
 
     @LastModifiedDate
-    @Column(name = "updatedAt", nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private @Nullable Instant updatedAt;
 
     @Version
     @Column(name = "version", nullable = false)
-    private @Nullable Integer version;
+    private Long version;
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false;
-        return id != null && id.equals(((AbstractEntity) other).id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Hibernate.getClass(this).hashCode();
-    }
 }
