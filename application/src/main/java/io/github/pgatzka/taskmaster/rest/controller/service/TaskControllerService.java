@@ -6,7 +6,6 @@ import io.github.pgatzka.taskmaster.rest.model.TaskModel;
 import io.github.pgatzka.taskmaster.rest.request.CreateTaskRequest;
 import io.github.pgatzka.taskmaster.rest.request.TaskFilterRequest;
 import io.github.pgatzka.taskmaster.rest.request.UpdateTaskRequest;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +22,7 @@ public class TaskControllerService {
 
     private final TaskRestMapper taskRestMapper;
 
-    public @NonNull TaskModel create(@NotNull CreateTaskRequest request) {
+    public @NonNull TaskModel create(@NonNull CreateTaskRequest request) {
         return taskRestMapper.toModel(domainService.create(taskRestMapper.toDTO(request)));
     }
 

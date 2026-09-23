@@ -1,17 +1,23 @@
 package io.github.pgatzka.taskmaster.domain.service;
 
-import io.github.pgatzka.taskmaster.domain.probe.TaskProbe;
 import io.github.pgatzka.taskmaster.domain.dto.TaskDTO;
 import io.github.pgatzka.taskmaster.domain.entity.TaskEntity;
+import io.github.pgatzka.taskmaster.domain.exception.EntityNotFoundException;
+import io.github.pgatzka.taskmaster.domain.exception.UniqueConflictException;
+import io.github.pgatzka.taskmaster.domain.exception.VersionMismatchException;
 import io.github.pgatzka.taskmaster.domain.mapper.TaskDomainMapper;
+import io.github.pgatzka.taskmaster.domain.probe.TaskProbe;
 import io.github.pgatzka.taskmaster.domain.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -20,46 +26,83 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskDomainService {
 
+    private static final String TITLE_CONSTRAINT = "uk_task__title";
+
     private final TaskRepository taskRepository;
 
     private final TaskDomainMapper taskDomainMapper;
 
-    public @NonNull TaskDTO create(@NonNull TaskDTO taskDTO) {
-        if (taskRepository.existsByTitle(taskDTO.title())) {
-            throw new RuntimeException("Task with title '%s' already exists".formatted(taskDTO.title()));
+    @Transactional
+    public @NonNull TaskDTO create(@NonNull TaskDTO dto) {
+        if (taskRepository.existsByTitle(dto.title())) {
+            throw titleConflict(dto.title(), null);
         }
-        return taskDomainMapper.toDTO(taskRepository.save(taskDomainMapper.toEntity(taskDTO)));
+        try {
+            return taskDomainMapper.toDTO(taskRepository.saveAndFlush(taskDomainMapper.toEntity(dto)));
+        } catch (DataIntegrityViolationException e) {
+            throw isTitleConflict(e) ? titleConflict(dto.title(), e) : e;
+        }
     }
 
+    @Transactional(readOnly = true)
     public @NonNull TaskDTO findByKey(@NonNull UUID key) {
         return taskDomainMapper.toDTO(getByKey(key));
     }
 
+    @Transactional(readOnly = true)
     public @NonNull Page<TaskDTO> findAll(@NonNull TaskProbe probe, @NonNull Pageable pageable) {
         return taskRepository.findAll(probe.toSpecification(), pageable).map(taskDomainMapper::toDTO);
     }
 
+    @Transactional
     public @NonNull TaskDTO update(@NonNull UUID key, @NonNull Long version, @NonNull TaskDTO dto) {
+        if (taskRepository.existsByTitleAndKeyNot(dto.title(), key)) {
+            throw titleConflict(dto.title(), null);
+        }
         TaskEntity taskEntity = getByKey(key);
         checkVersion(key, taskEntity.getVersion(), version);
         taskDomainMapper.update(dto, taskEntity);
-        return taskDomainMapper.toDTO(taskRepository.saveAndFlush(taskEntity));
-    }
-
-    public void delete(@NonNull UUID key, @NonNull Long version) {
-        TaskEntity taskEntity = getByKey(key);
-        checkVersion(key, taskEntity.getVersion(), version);
-        taskRepository.delete(taskEntity);
-    }
-
-    private void checkVersion(@NonNull UUID key, @Nullable Long actualVersion, @Nullable Long expectedVersion) {
-        if (!Objects.equals(actualVersion, expectedVersion)) {
-            throw new ObjectOptimisticLockingFailureException(TaskEntity.class, key);
+        try {
+            return taskDomainMapper.toDTO(taskRepository.saveAndFlush(taskEntity));
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw concurrentModification(key, e);
+        } catch (DataIntegrityViolationException e) {
+            throw isTitleConflict(e) ? titleConflict(dto.title(), e) : e;
         }
     }
 
+    @Transactional
+    public void delete(@NonNull UUID key, @NonNull Long version) {
+        TaskEntity taskEntity = getByKey(key);
+        checkVersion(key, taskEntity.getVersion(), version);
+        try {
+            taskRepository.delete(taskEntity);
+            taskRepository.flush();
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw concurrentModification(key, e);
+        }
+    }
+
+    private void checkVersion(@NonNull UUID key, @Nullable Long expectedVersion, @Nullable Long providedVersion) {
+        if (!Objects.equals(expectedVersion, providedVersion)) {
+            throw new VersionMismatchException("task with key '%s' has version '%s', got '%s'".formatted(key, expectedVersion, providedVersion));
+        }
+    }
+
+    private boolean isTitleConflict(DataIntegrityViolationException e) {
+        return e.getCause() instanceof ConstraintViolationException cause && TITLE_CONSTRAINT.equalsIgnoreCase(cause.getConstraintName());
+    }
+
+    private UniqueConflictException titleConflict(String title, @Nullable Throwable cause) {
+        return new UniqueConflictException("task with title '%s' already exists".formatted(title), cause);
+    }
+
+    private VersionMismatchException concurrentModification(UUID key, ObjectOptimisticLockingFailureException cause) {
+        return new VersionMismatchException("task with key '%s' was modified concurrently".formatted(key), cause);
+    }
+
     private TaskEntity getByKey(UUID key) {
-        return taskRepository.findByKey(key).orElseThrow(() -> new RuntimeException("Task with key '%s' not found".formatted(key)));
+        return taskRepository.findByKey(key).orElseThrow(() -> new EntityNotFoundException("task with key '%s' does not exist".formatted(key)));
     }
 
 }

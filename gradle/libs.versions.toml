@@ -10,8 +10,8 @@ org-mapstruct_mapstruct-processor = { group = "org.mapstruct", name = "mapstruct
 org-postgresql_postgresql = { group = "org.postgresql", name = "postgresql" }
 org-projectlombok_lombok = { group = "org.projectlombok", name = "lombok" }
 org-projectlombok_lombok-mapstruct-binding = { group = "org.projectlombok", name = "lombok-mapstruct-binding", version = "0.2.0" }
-org-springframework-boot_spring-boot-docker-compose = { group = "org.springframework.boot", name = "spring-boot-devtools" }
-org-springframework-boot_spring-boot-devtools = { group = "org.springframework.boot", name = "spring-boot-docker-compose" }
+org-springframework-boot_spring-boot-devtools = { group = "org.springframework.boot", name = "spring-boot-devtools" }
+org-springframework-boot_spring-boot-docker-compose = { group = "org.springframework.boot", name = "spring-boot-docker-compose" }
 org-springframework-boot_spring-boot-starter-data-jpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa" }
 org-springframework-boot_spring-boot-starter-data-jpa-test = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa-test" }
 org-springframework-boot_spring-boot-starter-flyway = { group = "org.springframework.boot", name = "spring-boot-starter-flyway" }

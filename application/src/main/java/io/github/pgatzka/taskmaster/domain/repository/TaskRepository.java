@@ -13,4 +13,6 @@ public interface TaskRepository extends AbstractRepository<TaskEntity> {
     boolean existsByTitle(String title);
 
     Optional<TaskEntity> findByKey(UUID key);
+
+    boolean existsByTitleAndKeyNot(String title, UUID key);
 }

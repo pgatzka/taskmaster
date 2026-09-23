@@ -24,7 +24,14 @@ public interface Probe<T extends AbstractEntity> {
     }
 
     default @NonNull Specification<T> likeIgnoreCase(@NonNull SingularAttribute<? super T, String> attribute, @Nullable String value) {
-        return !StringUtils.hasText(value) ? Specification.unrestricted() : (root, _, builder) -> builder.like(builder.lower(root.get(attribute)), "%" + value.toLowerCase(Locale.ROOT) + "%");
+        if (!StringUtils.hasText(value)) return Specification.unrestricted();
+
+        String string = value.trim().toLowerCase(Locale.ROOT);
+
+        return !StringUtils.hasText(string) ? Specification.unrestricted() : (root, _, builder) -> {
+            String pattern = "%" + string.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%") + "%";
+            return builder.like(builder.lower(root.get(attribute)), pattern, '\\');
+        };
     }
 
     default @NonNull Specification<T> between(@NonNull SingularAttribute<? super T, Instant> attribute, @Nullable Range<@Nullable Instant> range) {
