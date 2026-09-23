@@ -1,1 +1,0 @@
-create unique index udx_task__title on task (lower(title))

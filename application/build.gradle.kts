@@ -1,6 +1,5 @@
 plugins {
     id("java")
-    alias(libs.plugins.io.freefair.lombok)
     alias(libs.plugins.org.springframework.boot)
     alias(libs.plugins.io.spring.dependency.management)
 }
@@ -10,12 +9,15 @@ repositories {
 }
 
 dependencies {
+    annotationProcessor(libs.bundles.annotationProcessor)
+    compileOnly(libs.bundles.compileOnly)
+    developmentOnly(libs.bundles.developmentOnly)
     implementation(libs.bundles.implementation)
-    testImplementation(libs.bundles.test.implementation)
-    testRuntimeOnly(libs.bundles.test.runtime.only)
-    runtimeOnly(libs.bundles.runtime.only)
-    developmentOnly(libs.bundles.development.only)
-    annotationProcessor(libs.bundles.annotation.processor)
+    runtimeOnly(libs.bundles.runtimeOnly)
+    testAnnotationProcessor(libs.bundles.testAnnotationProcessor)
+    testCompileOnly(libs.bundles.testCompileOnly)
+    testImplementation(libs.bundles.testImplementation)
+    testRuntimeOnly(libs.bundles.testRuntimeOnly)
 }
 
 java {
