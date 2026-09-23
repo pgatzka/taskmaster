@@ -3,7 +3,7 @@ package io.github.pgatzka.taskmaster.domain.service;
 import io.github.pgatzka.taskmaster.domain.probe.TaskProbe;
 import io.github.pgatzka.taskmaster.domain.dto.TaskDTO;
 import io.github.pgatzka.taskmaster.domain.entity.TaskEntity;
-import io.github.pgatzka.taskmaster.domain.mapper.TaskMapper;
+import io.github.pgatzka.taskmaster.domain.mapper.TaskDomainMapper;
 import io.github.pgatzka.taskmaster.domain.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
@@ -22,28 +22,28 @@ public class TaskDomainService {
 
     private final TaskRepository taskRepository;
 
-    private final TaskMapper taskMapper;
+    private final TaskDomainMapper taskDomainMapper;
 
     public @NonNull TaskDTO create(@NonNull TaskDTO taskDTO) {
         if (taskRepository.existsByTitle(taskDTO.title())) {
             throw new RuntimeException("Task with title '%s' already exists".formatted(taskDTO.title()));
         }
-        return taskMapper.toDTO(taskRepository.save(taskMapper.toEntity(taskDTO)));
+        return taskDomainMapper.toDTO(taskRepository.save(taskDomainMapper.toEntity(taskDTO)));
     }
 
     public @NonNull TaskDTO findByKey(@NonNull UUID key) {
-        return taskMapper.toDTO(getByKey(key));
+        return taskDomainMapper.toDTO(getByKey(key));
     }
 
     public @NonNull Page<TaskDTO> findAll(@NonNull TaskProbe probe, @NonNull Pageable pageable) {
-        return taskRepository.findAll(probe.toSpecification(), pageable).map(taskMapper::toDTO);
+        return taskRepository.findAll(probe.toSpecification(), pageable).map(taskDomainMapper::toDTO);
     }
 
-    public @NonNull TaskDTO update(@NonNull UUID key, @NonNull TaskDTO dto) {
+    public @NonNull TaskDTO update(@NonNull UUID key, @NonNull Long version, @NonNull TaskDTO dto) {
         TaskEntity taskEntity = getByKey(key);
-        checkVersion(key, taskEntity.getVersion(), dto.version());
-        taskMapper.update(dto, taskEntity);
-        return taskMapper.toDTO(taskRepository.saveAndFlush(taskEntity));
+        checkVersion(key, taskEntity.getVersion(), version);
+        taskDomainMapper.update(dto, taskEntity);
+        return taskDomainMapper.toDTO(taskRepository.saveAndFlush(taskEntity));
     }
 
     public void delete(@NonNull UUID key, @NonNull Long version) {
