@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
 @Mapper(implementationPackage = "io.github.pgatzka.taskmaster.domain.mapper.impl")
-public interface TaskMapper {
+public interface TaskDomainMapper {
 
     TaskDTO toDTO(TaskEntity entity);
 

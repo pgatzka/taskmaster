@@ -9,4 +9,5 @@ import java.util.UUID;
 
 public record TaskDTO(@Nullable Long id, @NonNull UUID key, @Nullable Instant createdAt, @Nullable Instant updatedAt,
                       @Nullable Long version, @NonNull String title, boolean done) implements AbstractDTO {
+
 }
