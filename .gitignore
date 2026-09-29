@@ -1,0 +1,7 @@
+/.gradle/
+/.idea/
+/application/build/
+/build/
+/build-logic/.gradle/
+/build-logic/.kotlin/
+/build-logic/build/
