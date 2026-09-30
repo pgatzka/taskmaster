@@ -1,0 +1,13 @@
+spring:
+  main:
+    banner-mode: off
+  docker:
+    compose:
+      enabled: false
+  devtools:
+    add-properties: false
+logging:
+  level:
+    web: warn
+    root: warn
+    io.github.pgatzka.taskmaster: info
