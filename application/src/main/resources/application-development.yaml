@@ -1,0 +1,11 @@
+spring:
+  docker:
+    compose:
+      enabled: true
+  devtools:
+    add-properties: true
+logging:
+  level:
+    web: info
+    root: info
+    io.github.pgatzka.taskmaster: debug
