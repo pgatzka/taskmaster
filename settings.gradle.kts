@@ -4,6 +4,4 @@ plugins {
 
 rootProject.name = "taskmaster"
 
-includeBuild("build-logic")
-
 include("application")
